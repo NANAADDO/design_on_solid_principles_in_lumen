@@ -1,0 +1,68 @@
+services:
+  #PHP Service
+  app:
+    build:
+     context: .
+     dockerfile: Dockerfile
+    depends_on:
+      - apartmentDB
+    image: "apartmentapp:$buildID"
+    container_name: apartment
+    restart: unless-stopped
+    tty: true
+    environment:
+      SERVICE_NAME: app
+      SERVICE_TAGS: dev
+      APP_ENV: local
+      CONTAINER_ROLE: app
+    working_dir: /var/www
+    volumes:
+      - ./php/local.ini:/usr/local/etc/conf.d/local.ini
+      - ./apartment:/var/www
+    networks:
+      - app-network
+
+  apartmentwebserver:
+    image: nginx:alpine
+    container_name: apartmentserver
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "80:80"
+    volumes:
+      - ./apartment:/var/www
+      - ./nginx/conf.d/:/etc/nginx/conf.d
+    networks:
+      - app-network
+
+  #MySQL Service
+  apartmentDB:
+    image:  mysql:8.0
+    container_name: apartmentdb
+    restart: unless-stopped
+    tty:  true
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_DATABASE: apartment
+      MYSQL_USER : apartmentuser
+      MYSQL_PASSWORD : app@2024
+      MYSQL_ROOT_PASSWORD:  apartment_database
+      SERVICE_TAGS : dev
+      SERVICE_NAME: mysql
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - app-network
+
+#Docker Networks
+networks:
+  app-network:
+    driver: bridge
+
+#Volumes
+volumes:
+  dbdata:
+    driver: local
+  redis:
+    driver: local

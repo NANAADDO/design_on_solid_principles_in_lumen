@@ -1,0 +1,85 @@
+version: '3'
+
+services:
+  #PHP Service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - thinkDB
+    image: "thinksurance:1"
+    container_name: thinksurance
+    restart: unless-stopped
+    tty: true
+    environment:
+      SERVICE_NAME: app
+      SERVICE_TAGS: dev
+      APP_ENV: local
+      CONTAINER_ROLE: app
+    working_dir: /var/www
+    volumes:
+      - ./php/local.ini:/usr/local/etc/conf.d/local.ini
+      - .:/var/www
+    networks:
+      - app-network
+
+  thinkwebserver:
+    image: nginx:alpine
+    container_name: thinkserver
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "80:80"
+    volumes:
+      - .:/var/www
+      - ./nginx/conf.d/:/etc/nginx/conf.d
+    networks:
+      - app-network
+
+  #MySQL Service
+  thinkDB:
+    image:  mysql:8.0
+    container_name: thinkdb
+    restart: unless-stopped
+    tty:  true
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_DATABASE: thinknsurance
+      MYSQL_USER : thinkuser
+      MYSQL_PASSWORD : think@2020
+      MYSQL_ROOT_PASSWORD:  thinkuser_database
+      SERVICE_TAGS : dev
+      SERVICE_NAME: mysql
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - app-network
+  jenkins:
+    container_name: jenkins
+    restart: unless-stopped
+    tty:  true
+    image: jenkins/docker
+    build:
+      context: .
+      dockerfile: jenkins-script/Dockerfile
+    ports:
+      - "5000:8080"
+    volumes:
+      - $PWD/jenkins_home:/var/jenkins_home
+      - $PWD/jenkins-script/db-backup-s3.sh:/tmp/db-backup-s3.sh
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - app-network
+#Docker Networks
+networks:
+  app-network:
+    driver: bridge
+
+#Volumes
+volumes:
+  dbdata:
+    driver: local
+  redis:
+    driver: local
