@@ -12,6 +12,7 @@ class WebInformation
     private ?string $userName = null;
 
     private ?string $password = null;
+    private ?bool $isLive = false;
 
     /**
      * @return string|null
@@ -75,6 +76,22 @@ class WebInformation
     public function setPassword(?string $password): WebInformation
     {
         $this->password = $password;
+    }
+
+    /**
+     * @return bool|null
+     */
+    public function getIsLive(): ?bool
+    {
+        return $this->isLive;
+    }
+
+    /**
+     * @param bool|null $isLive
+     */
+    public function setIsLive(?bool $isLive): WebInformation
+    {
+        $this->isLive = $isLive;
     }
 
 
